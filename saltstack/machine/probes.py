@@ -1,52 +1,46 @@
 # -*- coding: utf-8 -*-
 from chaoslib.types import Configuration, Secrets
 from logzero import logger
+from saltstack import saltstack_api_client
+import saltstack
 
-from chaosazure.machine.constants import RES_TYPE_VM
-from chaosazure.rgraph.resource_graph import fetch_resources
-
-__all__ = ["describe_machines", "count_machines"]
+__all__ = ["is_minion_online"]
 
 
-def describe_machines(filter: str = None,
+def is_minion_online(clients: str = None,
                       configuration: Configuration = None,
                       secrets: Secrets = None):
     """
-    Describe Azure virtual machines.
+        test.ping salt minions
 
-    Parameters
-    ----------
-    filter : str
-        Filter the virtual machines. If the filter is omitted all machines in
-        the subscription will be selected for the probe.
-        Filtering example:
-        'where resourceGroup=="myresourcegroup" and name="myresourcename"'
+        Parameters
+        ----------
+        clients : str or List
+            same as 
+                salt --list ['client1','client2','client3'] test.ping 
+        api return a dict {'client1': True, 'client2': False}
+        this function will return dict otherwise raise execption
+            {'client1': 'Online', 'client2': 'Offline', 'client3':'Not a Salt Minion' }
     """
-    logger.debug(
-        "Start describe_machines: configuration='{}', filter='{}'".format(
-            configuration, filter))
+    try:
+        client = saltstack.saltstack_api_client(secrets)
+        machines = client.run_cmd(clients, 'test.ping')
 
-    machines = fetch_resources(filter, RES_TYPE_VM, secrets, configuration)
-    return machines
+        result = dict()
 
+        for k,v in machines.items():
+            if k not in clients:
+                result[k] = "Not a Salt Minion"
+            else:
+                if v == False:
+                    result[k] = "Offline"
+                else:
+                    result[k] = "Online"
 
-def count_machines(filter: str = None,
-                   configuration: Configuration = None,
-                   secrets: Secrets = None) -> int:
-    """
-    Return count of Azure virtual machines.
+        return result
 
-    Parameters
-    ----------
-    filter : str
-        Filter the virtual machines. If the filter is omitted all machines in
-        the subscription will be selected for the probe.
-        Filtering example:
-        'where resourceGroup=="myresourcegroup" and name="myresourcename"'
-    """
-    logger.debug(
-        "Start count_machines: configuration='{}', filter='{}'".format(
-            configuration, filter))
+    except Exception as x:
+        raise FailedActivity(
+            "failed issuing a execute of shell script via salt API " + str(x)
+            )
 
-    machines = fetch_resources(filter, RES_TYPE_VM, secrets, configuration)
-    return len(machines)

@@ -12,13 +12,18 @@ from chaoslib.types import Discovery, DiscoveredActivities, \
 from logzero import logger
 import requests
 import ssl
-# context = ssl._create_unverified_context()
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 __all__ = ["saltstack_api_client", "discover", "__version__"]
 __version__ = '0.0.1'
 
 class salt_api_client:
+    """
+        Offically supported by NETAPI MODULES
+        https://docs.saltstack.com/en/latest/topics/netapi/index.html
+        However, generally you need to avoid http request verify by verify=False
+
+    """
 
     def __init__(self, configuration):
         self.ApiClient(configuration)
@@ -134,7 +139,7 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
     Create a SaltStack http(s) client from:
 
     1. Useranme & Password. 
-       -d username='salt' -d password='1QaZ2WsX456F' -d eauth='pam'
+       -d username='salt' -d password='abcd1234' -d eauth='pam'
        Then a token in obrained via <salt_url>/login 
 
     2. Token

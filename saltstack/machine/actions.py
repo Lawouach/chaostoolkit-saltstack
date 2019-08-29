@@ -104,7 +104,7 @@ def stress_cpu(instance_ids: List[str] = None,
             results[k]=result
     except Exception as x:
         raise FailedActivity(
-            "failed issuing a execute of shell script via salt API" + str(x)
+            "failed issuing a execute of shell script via salt API " + str(x)
             )
 
     if results:
