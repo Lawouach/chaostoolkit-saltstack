@@ -7,7 +7,7 @@ import io
 import setuptools
 
 sys.path.insert(0, ".")
-from chaosazure import __version__
+from saltstack import __version__
 sys.path.remove(".")
 
 name = 'chaostoolkit-saltstack'
@@ -34,12 +34,8 @@ author_email = 'contact@chaostoolkit.org'
 url = 'https://chaostoolkit.org'
 license = 'Apache License Version 2.0'
 packages = [
-    'chaosazure',
-    'chaosazure.aks',
-    'chaosazure.machine',
-    'chaosazure.webapp',
-    'chaosazure.rgraph',
-    'chaosazure.vmss'
+    'saltstack',
+    'saltstack.machine'
 ]
 
 needs_pytest = set(['pytest', 'test']).intersection(sys.argv)

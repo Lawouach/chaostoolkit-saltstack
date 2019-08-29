@@ -20,21 +20,27 @@ __version__ = '0.0.1'
 
 class salt_api_client:
 
+    def __init__(self, configuration):
+        self.ApiClient(configuration)
+
     def ApiClient(self, configuration):
         self.url = configuration['url']
-        self.username = configuration['username']
-        self.password = configuration['password']
+        #Use Token
+        self.useToken = False
+        if 'token' in configuration:
+            self.useToken = True
+            self.token = configuration['token']
+            self.headers['X-Auth-Token'] = self.token
+        elif 'username' in configuration :
+            self.username = configuration['username']
+            self.password = configuration['password']
         #Default settings for Salt Master
         self.headers = {"Content-type": "application/json"}
         self.params = {'client': 'local', 'fun': '', 'tgt': ''}
         #Use User/Pass
-        self.login_url = self.url + "login"
+        self.login_url = self.url + "/login"
         self.login_params = {'username': self.username, 'password': self.password, 'eauth': 'pam'}
-        #Use Token
-        if configuration['token'] is not None:
-            self.useToken = True
-            self.token = configuration['token']
-            self.headers['X-Auth-Token'] = self.token
+        
 
     def run_cmd(self, tgt, method, arg=None):
         """
@@ -53,12 +59,45 @@ class salt_api_client:
         return result
 
     def async_run_cmd(self, tgt, method, arg=None):
-        return None
+        """
+           remote run commands asynchronized，same with:
+               salt --async 'client1' cmd.run 'ls -li'
+        """
+        if arg:
+            params = {'client': 'local_async', 'fun': method, 'tgt': tgt, 'arg': arg, 'tgt_type':'list' }
+        else:
+            params = {'client': 'local_async', 'fun': method, 'tgt': tgt, 'tgt_type':'list' }
+        self.__check_token__()
+        jid = self.__get_http_data__(self.url, params)['jid']
+        return jid
 
-    def get_cmd_result(self, tgt, method, arg=None):
-        return None
+    def get_async_cmd_result(self, jid):  
+        """
+            Get aync cmd result according to jid that returned when call aync cmd， same with:
+                salt 'client' jobs.lookup_jid 12345678987654321
+        """
+        params = {'client': 'runner', 'fun': 'jobs.lookup_jid', 'jid': jid}
+        self.__check_token__()
+        result = self.__get_http_data__(self.url, params)
+        return result
+
+    def async_cmd_exit_success(self, jid):  
+        """
+            Check if a job has been executed and exit successfully
+                salt 'client' jobs.exit_success 12345678987654321
+            return:
+                {'client1': True, 'client2': True}
+        """
+        params = {'client': 'runner', 'fun': 'jobs.exit_success', 'jid': jid}
+        self.__check_token__()
+        result = self.__get_http_data__(self.url, params)
+        return result
 
     def get_grains_get(self, tgt, item):
+        """
+            Get a specific grains atrribute/id
+                salt 'client1' grains.get kernel|os|os_family
+        """
         params = {'client':'local', 'fun': 'grains.get', 'tgt': tgt, 'arg':item, 'tgt_type':'list' }
         self.__check_token__()
         result = self.__get_http_data__(self.url, params)
@@ -90,7 +129,7 @@ def is_saltmaster_local():
     # return os.path.exists(config_path)
     return False
 
-def saltstack_api_client(secrets: Secrets = None) -> salt_api_client.ApiClient:
+def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
     """
     Create a SaltStack http(s) client from:
 
@@ -128,7 +167,7 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client.ApiClient:
 
         #TODO Not implemented
         configuration = dict()
-        return salt_api_client.ApiClient(configuration)
+        return salt_api_client(configuration)
 
     else:
 
@@ -136,15 +175,18 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client.ApiClient:
         configuration['debug'] = True
         configuration['url'] = lookup("SALTMASTER_HOST", "http://localhost")
 
-        if "SALTMASTER_HOST" in env or "SALTMASTER_HOST" in secrets:
-            configuration['url'] = lookup("SALTMASTER_HOST", "http://localhost")
         if "SALTMASTER_USER" in env or "SALTMASTER_USER" in secrets:
             configuration['username'] = lookup("SALTMASTER_USER", "")
             configuration['password'] = lookup("SALTMASTER_PASSWORD", "")
-        if "SALTMASTER_TOKEN" in env or "SALTMASTER_TOKEN" in secrets:
+        elif "SALTMASTER_TOKEN" in env or "SALTMASTER_TOKEN" in secrets:
             configuration['token'] = lookup("SALTMASTER_TOKEN")
+        else:
+            raise FailedActivity(
+                "configuration is not complete, either use user/pass or a token! "
+            )
+        logger.debug(json.dumps(configuration))
 
-    return client.ApiClient(configuration)
+    return salt_api_client(configuration)
 
 
 def discover(discover_system: bool = True) -> Discovery:

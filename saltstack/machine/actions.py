@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 import os
+from typing import Any, Dict, List
+import json
 
 from saltstack import saltstack_api_client
+import saltstack
 from saltstack.machine.constants import OS_LINUX, OS_WINDOWS
 
 from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
 from logzero import logger
+from time import sleep
 
 __all__ = ["stress_cpu", "fill_disk", "network_latency", "burn_io", 
            "network_loss", "network_corruption", "network_advanced"]
@@ -52,48 +56,64 @@ def stress_cpu(instance_ids: List[str] = None,
         "Start stress_cpu: configuration='{}', filter='{}'".format(
             configuration, filter))
 
-    # machines = __fetch_machines(filter, configuration, secrets)
-    client = saltstack.saltstack_api_client(secrets)
-    machines = client.get_grains_get(instance_ids, 'kernel')
+    logger.debug(json.dumps(secrets))
 
-    for k,v in machines.items():
-        name = k
-        os_type = v
-        if os_type == OS_WINDOWS:
-            command_id = '' #TODO
-            script_name = "cpu_stress_test.ps1"
-        elif os_type == OS_LINUX:
-            command_id = 'cmd.run'
-            script_name = "cpu_stress_test.sh"
-        else:
-            raise FailedActivity(
-                "Cannot run CPU stress test on OS: %s" % os_type)
+    try:
+        client = saltstack.saltstack_api_client(secrets)
+        machines = client.get_grains_get(instance_ids, 'kernel')
 
-        with open(os.path.join(os.path.dirname(__file__),
-                               "scripts", script_name)) as file:
-            script_content = file.read()
+        jids = dict()
+        for k,v in machines.items():
+            name = k
+            os_type = v
+            if os_type == OS_WINDOWS:
+                command_id = '' #TODO
+                script_name = "cpu_stress_test.ps1"
+                cmd_param = "duration="+execution_duration+"\n" #TODO in ps1
+            elif os_type == OS_LINUX:
+                command_id = 'cmd.run'
+                script_name = "cpu_stress_test.sh"
+                cmd_param = "duration="+execution_duration+"\n"
+            else:
+                raise FailedActivity(
+                    "Cannot run CPU stress test on OS: %s" % os_type)
 
-        #TODO 28 Aug 2019 - Xiaopeng
+            with open(os.path.join(os.path.dirname(__file__),
+                                   "scripts", script_name)) as file:
+                script_content = file.read()
+            #merge duration
+            script_content = cmd_param+script_content
 
-        parameters = {
-            'command_id': command_id,
-            'script': [script_content],
-            'parameters': [
-                {'name': "duration", 'value': duration}
-            ]
-        }
+            #Do aync cmd and get jid
+            logger.debug("Stressing CPU of machine: {}".format(name))
+            salt_method = 'cmd.run'
+            jid = client.async_run_cmd( name, salt_method, script_content)
+            jids[k] = jid
+        logger.debug(json.dumps(jids))
+        #Wait the duration as well
+        sleep(int(execution_duration))
 
-        logger.debug("Stressing CPU of machine: {}".format(name))
-        poller = client.virtual_machines.run_command(group, name, parameters)
-        result = poller.result(duration + timeout)  # Blocking till executed
+        #Check result
+        results = dict()
+        results_overview = True
+        for k,v in jids.items():
+            res = client.async_cmd_exit_success(v)[k]
+            result = client.get_async_cmd_result(v)[k]
 
+            results_overview = results_overview and res
+            results[k]=result
+    except Exception as x:
+        raise FailedActivity(
+            "failed issuing a execute of shell script via salt API" + str(x)
+            )
 
-        if result:
-            logger.debug(result.value[0].message)  # stdout/stderr
-        else:
-            raise FailedActivity(
-                "stress_cpu operation did not finish on time. "
-                "You may consider increasing timeout setting.")
+    if results:
+        for k,v in results.items():
+            logger.info(k + " - " + v)  
+    else:
+        raise FailedActivity(
+            "stress_cpu operation did not finish on time. "
+        )
 
 
 def fill_disk(filter: str = None,
@@ -138,51 +158,51 @@ def fill_disk(filter: str = None,
     Fill two machines at random from the group 'rg'
     """
 
-    logger.debug(
-        "Start fill_disk: configuration='{}', filter='{}'".format(
-            configuration, filter))
+    # logger.debug(
+    #     "Start fill_disk: configuration='{}', filter='{}'".format(
+    #         configuration, filter))
 
-    machines = __fetch_machines(filter, configuration, secrets)
-    client = __compute_mgmt_client(secrets, configuration)
+    # machines = __fetch_machines(filter, configuration, secrets)
+    # client = __compute_mgmt_client(secrets, configuration)
 
-    for m in machines:
-        name = m['name']
-        group = m['resourceGroup']
-        os_type = __get_os_type(m)
-        if os_type == OS_WINDOWS:
-            command_id = 'RunPowerShellScript'
-            script_name = "fill_disk.ps1"
-        elif os_type == OS_LINUX:
-            command_id = 'RunShellScript'
-            script_name = "fill_disk.sh"
-        else:
-            raise FailedActivity(
-                "Cannot run disk filling test on OS: %s" % os_type)
+    # for m in machines:
+    #     name = m['name']
+    #     group = m['resourceGroup']
+    #     os_type = __get_os_type(m)
+    #     if os_type == OS_WINDOWS:
+    #         command_id = 'RunPowerShellScript'
+    #         script_name = "fill_disk.ps1"
+    #     elif os_type == OS_LINUX:
+    #         command_id = 'RunShellScript'
+    #         script_name = "fill_disk.sh"
+    #     else:
+    #         raise FailedActivity(
+    #             "Cannot run disk filling test on OS: %s" % os_type)
 
-        with open(os.path.join(os.path.dirname(__file__),
-                               "scripts", script_name)) as file:
-            script_content = file.read()
+    #     with open(os.path.join(os.path.dirname(__file__),
+    #                            "scripts", script_name)) as file:
+    #         script_content = file.read()
 
-        logger.debug("Script content: {}".format(script_content))
-        parameters = {
-            'command_id': command_id,
-            'script': [script_content],
-            'parameters': [
-                {'name': "duration", 'value': duration},
-                {'name': "size", 'value': size}
-            ]
-        }
+    #     logger.debug("Script content: {}".format(script_content))
+    #     parameters = {
+    #         'command_id': command_id,
+    #         'script': [script_content],
+    #         'parameters': [
+    #             {'name': "duration", 'value': duration},
+    #             {'name': "size", 'value': size}
+    #         ]
+    #     }
 
-        logger.debug("Filling disk of machine: {}".format(name))
-        poller = client.virtual_machines.run_command(group, name, parameters)
-        result = poller.result(duration + timeout)  # Blocking till executed
-        logger.debug("Execution result: {}".format(poller))
-        if result:
-            logger.debug(result.value[0].message)  # stdout/stderr
-        else:
-            raise FailedActivity(
-                "fill_disk operation did not finish on time. "
-                "You may consider increasing timeout setting.")
+    #     logger.debug("Filling disk of machine: {}".format(name))
+    #     poller = client.virtual_machines.run_command(group, name, parameters)
+    #     result = poller.result(duration + timeout)  # Blocking till executed
+    #     logger.debug("Execution result: {}".format(poller))
+    #     if result:
+    #         logger.debug(result.value[0].message)  # stdout/stderr
+    #     else:
+    #         raise FailedActivity(
+    #             "fill_disk operation did not finish on time. "
+    #             "You may consider increasing timeout setting.")
 
 
 def network_latency(filter: str = None,
@@ -231,49 +251,49 @@ def network_latency(filter: str = None,
     Increase the latency of two machines at random from the group 'rg'
     """
 
-    logger.debug(
-        "Start network_latency: configuration='{}', filter='{}'".format(
-            configuration, filter))
+    # logger.debug(
+    #     "Start network_latency: configuration='{}', filter='{}'".format(
+    #         configuration, filter))
 
-    machines = __fetch_machines(filter, configuration, secrets)
-    client = __compute_mgmt_client(secrets, configuration)
+    # machines = __fetch_machines(filter, configuration, secrets)
+    # client = __compute_mgmt_client(secrets, configuration)
 
-    for m in machines:
-        name = m['name']
-        group = m['resourceGroup']
-        os_type = __get_os_type(m)
-        if os_type == OS_LINUX:
-            command_id = 'RunShellScript'
-            script_name = "network_latency.sh"
-        else:
-            raise FailedActivity(
-                "Cannot run network latency test on OS: %s" % os_type)
+    # for m in machines:
+    #     name = m['name']
+    #     group = m['resourceGroup']
+    #     os_type = __get_os_type(m)
+    #     if os_type == OS_LINUX:
+    #         command_id = 'RunShellScript'
+    #         script_name = "network_latency.sh"
+    #     else:
+    #         raise FailedActivity(
+    #             "Cannot run network latency test on OS: %s" % os_type)
 
-        with open(os.path.join(os.path.dirname(__file__),
-                               "scripts", script_name)) as file:
-            script_content = file.read()
+    #     with open(os.path.join(os.path.dirname(__file__),
+    #                            "scripts", script_name)) as file:
+    #         script_content = file.read()
 
-        logger.debug("Script content: {}".format(script_content))
-        parameters = {
-            'command_id': command_id,
-            'script': [script_content],
-            'parameters': [
-                {'name': "duration", 'value': duration},
-                {'name': "delay", 'value': delay},
-                {'name': "jitter", 'value': jitter}
-            ]
-        }
+    #     logger.debug("Script content: {}".format(script_content))
+    #     parameters = {
+    #         'command_id': command_id,
+    #         'script': [script_content],
+    #         'parameters': [
+    #             {'name': "duration", 'value': duration},
+    #             {'name': "delay", 'value': delay},
+    #             {'name': "jitter", 'value': jitter}
+    #         ]
+    #     }
 
-        logger.debug("Increasing the latency of machine: {}".format(name))
-        poller = client.virtual_machines.run_command(group, name, parameters)
-        result = poller.result(duration + timeout)  # Blocking till executed
-        logger.debug("Execution result: {}".format(poller))
-        if result:
-            logger.debug(result.value[0].message)  # stdout/stderr
-        else:
-            raise FailedActivity(
-                "network_latency operation did not finish on time. "
-                "You may consider increasing timeout setting.")
+    #     logger.debug("Increasing the latency of machine: {}".format(name))
+    #     poller = client.virtual_machines.run_command(group, name, parameters)
+    #     result = poller.result(duration + timeout)  # Blocking till executed
+    #     logger.debug("Execution result: {}".format(poller))
+    #     if result:
+    #         logger.debug(result.value[0].message)  # stdout/stderr
+    #     else:
+    #         raise FailedActivity(
+    #             "network_latency operation did not finish on time. "
+    #             "You may consider increasing timeout setting.")
 
 
 def burn_io(filter: str = None,
@@ -316,48 +336,48 @@ def burn_io(filter: str = None,
     the group 'rg'
     """
 
-    logger.debug(
-        "Start burn_io: configuration='{}', filter='{}'".format(
-            configuration, filter))
+    # logger.debug(
+    #     "Start burn_io: configuration='{}', filter='{}'".format(
+    #         configuration, filter))
 
-    machines = __fetch_machines(filter, configuration, secrets)
-    client = __compute_mgmt_client(secrets, configuration)
+    # machines = __fetch_machines(filter, configuration, secrets)
+    # client = __compute_mgmt_client(secrets, configuration)
 
-    for m in machines:
-        name = m['name']
-        group = m['resourceGroup']
-        os_type = __get_os_type(m)
-        if os_type == OS_LINUX:
-            command_id = 'RunShellScript'
-            script_name = "burn_io.sh"
-        else:
-            raise FailedActivity(
-                "Cannot run burn_io test on OS: %s" % os_type)
+    # for m in machines:
+    #     name = m['name']
+    #     group = m['resourceGroup']
+    #     os_type = __get_os_type(m)
+    #     if os_type == OS_LINUX:
+    #         command_id = 'RunShellScript'
+    #         script_name = "burn_io.sh"
+    #     else:
+    #         raise FailedActivity(
+    #             "Cannot run burn_io test on OS: %s" % os_type)
 
-        with open(os.path.join(os.path.dirname(__file__),
-                               "scripts", script_name)) as file:
-            script_content = file.read()
+    #     with open(os.path.join(os.path.dirname(__file__),
+    #                            "scripts", script_name)) as file:
+    #         script_content = file.read()
 
-        logger.debug("Script content: {}".format(script_content))
-        parameters = {
-            'command_id': command_id,
-            'script': [script_content],
-            'parameters': [
-                {'name': "duration", 'value': duration},
-            ]
-        }
+    #     logger.debug("Script content: {}".format(script_content))
+    #     parameters = {
+    #         'command_id': command_id,
+    #         'script': [script_content],
+    #         'parameters': [
+    #             {'name': "duration", 'value': duration},
+    #         ]
+    #     }
 
-        logger.debug("Increasing the I/O operations per "
-                     "second of machine: {}".format(name))
-        poller = client.virtual_machines.run_command(group, name, parameters)
-        result = poller.result(duration + timeout)  # Blocking till executed
-        logger.debug("Execution result: {}".format(poller))
-        if result:
-            logger.debug(result.value[0].message)  # stdout/stderr
-        else:
-            raise FailedActivity(
-                "burn_io operation did not finish on time. "
-                "You may consider increasing timeout setting.")
+    #     logger.debug("Increasing the I/O operations per "
+    #                  "second of machine: {}".format(name))
+    #     poller = client.virtual_machines.run_command(group, name, parameters)
+    #     result = poller.result(duration + timeout)  # Blocking till executed
+    #     logger.debug("Execution result: {}".format(poller))
+    #     if result:
+    #         logger.debug(result.value[0].message)  # stdout/stderr
+    #     else:
+    #         raise FailedActivity(
+    #             "burn_io operation did not finish on time. "
+    #             "You may consider increasing timeout setting.")
 
 def network_loss():
     return

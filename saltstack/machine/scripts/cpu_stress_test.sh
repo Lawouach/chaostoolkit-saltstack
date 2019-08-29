@@ -1,4 +1,3 @@
-duration=$1
 # get CPU counts
 cpus=$(cat /proc/cpuinfo | awk "/^processor/{print $3}" | wc -l)
 pids=""
@@ -12,3 +11,11 @@ do
         done & pids="$pids $!";
 done
 sleep $duration
+echo "Stressing $cpus CPUs for $duration seconds. Done"
+
+ret=$?
+if [ $ret -eq 0 ]; then
+    echo "experiment strees_cpu -> success"
+else
+    echo "experiment strees_cpu -> fail"
+fi
