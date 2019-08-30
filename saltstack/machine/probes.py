@@ -44,3 +44,45 @@ def is_minion_online(clients: str = None,
             "failed issuing a execute of shell script via salt API " + str(x)
             )
 
+def is_iproute_tc_installed(clients: str = None,
+                      configuration: Configuration = None,
+                      secrets: Secrets = None):
+    """
+        cmd.run tc -help
+
+        Parameters
+        ----------
+        clients : str or List
+            same as 
+                salt --list ['client1','client2','client3'] cmd.run tc -help
+        api return a dict {'client1': 'xxxxxx', 'client2': 'xxxxxx'}
+        this function will return dict otherwise raise execption
+            {'PCNCMCNSA0018': 'Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }       
+            tc [-force] -batch filename where  OBJECT := { qdisc | class | filter | action | monitor | exec }       
+            OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | -n[etns] name |  
+            -nm | -nam[es] | { -cf | -conf } path }', 'PCNCMCNSA0016': 'Usage: tc [ OPTIONS ] OBJECT { COMMAND | help }     
+            tc [-force] -batch filename where  OBJECT := { qdisc | class | filter | action | monitor | exec }
+            OPTIONS := { -s[tatistics] | -d[etails] | -r[aw] | -p[retty] | -b[atch] [filename] | -n[etns] name |
+            -nm | -nam[es] | { -cf | -conf } path }'}
+    """
+    try:
+        client = saltstack.saltstack_api_client(secrets)
+        machines = client.run_cmd(clients, 'cmd.run', 'tc -help')
+
+        result = dict()
+
+        for k,v in machines.items():
+            if k not in clients:
+                result[k] = "Not a Salt Minion"
+            else:
+                if v.startsWith("Usage: tc"):
+                    result[k] = "Installed"
+                else:
+                    result[k] = "Not Installed"
+
+        return result
+
+    except Exception as x:
+        raise FailedActivity(
+            "failed issuing a execute of shell script via salt API " + str(x)
+            )
