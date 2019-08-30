@@ -28,7 +28,7 @@ def is_minion_online(clients: str = None,
 
         result = dict()
 
-        for k,v in machines.items():
+        for k, v in machines.items():
             if k not in clients:
                 result[k] = "Not a Salt Minion"
             else:
@@ -43,6 +43,7 @@ def is_minion_online(clients: str = None,
         raise FailedActivity(
             "failed issuing a execute of shell script via salt API " + str(x)
             )
+
 
 def is_iproute_tc_installed(clients: str = None,
                       configuration: Configuration = None,
@@ -71,7 +72,7 @@ def is_iproute_tc_installed(clients: str = None,
 
         result = dict()
 
-        for k,v in machines.items():
+        for k, v in machines.items():
             if k not in clients:
                 result[k] = "Not a Salt Minion"
             else:

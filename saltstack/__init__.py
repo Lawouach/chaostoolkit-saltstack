@@ -17,6 +17,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 __all__ = ["saltstack_api_client", "discover", "__version__"]
 __version__ = '0.0.1'
 
+
 class salt_api_client:
     """
         Offically supported by NETAPI MODULES
@@ -26,11 +27,8 @@ class salt_api_client:
     """
 
     def __init__(self, configuration):
-        self.ApiClient(configuration)
-
-    def ApiClient(self, configuration):
         self.url = configuration['url']
-        #Use Token
+        # Use Token
         self.useToken = False
         if 'token' in configuration:
             self.useToken = True
@@ -39,13 +37,12 @@ class salt_api_client:
         elif 'username' in configuration :
             self.username = configuration['username']
             self.password = configuration['password']
-        #Default settings for Salt Master
+        # Default settings for Salt Master
         self.headers = {"Content-type": "application/json"}
         self.params = {'client': 'local', 'fun': '', 'tgt': ''}
-        #Use User/Pass
+        # Use User/Pass
         self.login_url = self.url + "/login"
         self.login_params = {'username': self.username, 'password': self.password, 'eauth': 'pam'}
-        
 
     def run_cmd(self, tgt, method, arg=None):
         """
@@ -58,7 +55,7 @@ class salt_api_client:
         else:
             params = {'client':'local', 'fun': method, 'tgt': tgt, 'tgt_type':'list' }
 
-        #Refresh token for each execution
+        # Refresh token for each execution
         self.__check_token__()
         result = self.__get_http_data__(self.url, params)
         return result
@@ -127,12 +124,14 @@ class salt_api_client:
         if self.useToken != True:
             self.__obtain_token__()
 
-#TODO Not implemented
+
+# TODO Not implemented
 def is_saltmaster_local():
     # config_path = os.path.expanduser(
     #     os.environ.get('KUBECONFIG', '~/.kube/config'))
     # return os.path.exists(config_path)
     return False
+
 
 def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
     """
@@ -170,7 +169,7 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
 
     if is_saltmaster_local():
 
-        #TODO Not implemented
+        # TODO Not implemented
         configuration = dict()
         return salt_api_client(configuration)
 
