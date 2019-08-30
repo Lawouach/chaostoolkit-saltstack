@@ -256,11 +256,11 @@ def network_latency(instance_ids: str = None,
     """
     return
 
-def restore_network_setting():
-    return
-
-def release_io():
-    return
+# def restore_network_setting():
+#     return
+#
+# def release_io():
+#     return
 
 ###############################################################################
 # Private helper functions
