@@ -51,6 +51,7 @@ def burn_cpu(instance_ids: List[str] = None,
         for k, v in machines.items():
             name = k
             os_type = v
+            param["instance_id"] = k
             script_content = __construct_script_content__(BURN_CPU, os_type, param)
 
             # Do async cmd and get jid
@@ -123,6 +124,7 @@ def fill_disk(instance_ids: List[str] = None,
         for k, v in machines.items():
             name = k
             os_type = v
+            param["instance_id"] = k
             script_content = __construct_script_content__(FILL_DISK, os_type, param)
 
             # Do async cmd and get jid
@@ -190,6 +192,7 @@ def burn_io(instance_ids: List[str] = None,
         for k, v in machines.items():
             name = k
             os_type = v
+            param["instance_id"] = k
             script_content = __construct_script_content__(BURN_IO, os_type, param)
 
             # Do async cmd and get jid
@@ -260,6 +263,7 @@ def network_advanced(instance_ids: List[str] = None,
         for k, v in machines.items():
             name = k
             os_type = v
+            param["instance_id"] = k
             script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
@@ -332,6 +336,7 @@ def network_loss(instance_ids: List[str] = None,
         for k, v in machines.items():
             name = k
             os_type = v
+            param["instance_id"] = k
             script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
@@ -404,6 +409,7 @@ def network_corruption(instance_ids: List[str] = None,
         for k, v in machines.items():
             name = k
             os_type = v
+            param["instance_id"] = k
             script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
@@ -480,6 +486,7 @@ def network_latency(instance_ids: str = None,
         for k, v in machines.items():
             name = k
             os_type = v
+            param["instance_id"] = k
             script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
