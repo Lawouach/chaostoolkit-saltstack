@@ -1,16 +1,15 @@
-# Chaos Toolkit Extension for Azure
+# Chaos Toolkit Extension for SaltStack
 
-[![Build Status](https://travis-ci.org/chaostoolkit-incubator/chaostoolkit-azure.svg?branch=master)](https://travis-ci.org/chaostoolkit-incubator/chaostoolkit-azure)
-[![Python versions](https://img.shields.io/pypi/pyversions/chaostoolkit-azure.svg)](https://www.python.org/)
+[![Build Status](https://travis-ci.org/chaostoolkit-incubator/chaostoolkit-saltstack.svg?branch=master)](https://travis-ci.org/chaostoolkit-incubator/chaostoolkit-saltstack)
+[![Python versions](https://img.shields.io/pypi/pyversions/chaostoolkit-saltstack.svg)](https://www.python.org/)
 
 This project is a collection of [actions][] and [probes][], gathered as an
 extension to the [Chaos Toolkit][chaostoolkit]. It targets the
-[Microsoft Azure][azure] platform.
 
 [actions]: http://chaostoolkit.org/reference/api/experiment/#action
 [probes]: http://chaostoolkit.org/reference/api/experiment/#probe
 [chaostoolkit]: http://chaostoolkit.org
-[azure]: https://azure.microsoft.com/en-us/
+[saltstack]: https://www.saltstack.com/
 
 ## Install
 
@@ -20,7 +19,7 @@ To be used from your experiment, this package must be installed in the Python
 environment where [chaostoolkit][] already lives.
 
 ```
-$ pip install -U chaostoolkit-azure
+$ pip install -U chaostoolkit-salt
 ```
 
 ## Usage
@@ -31,15 +30,15 @@ experiment file:
 ```json
 {
     "type": "action",
-    "name": "start-service-factory-chaos",
+    "name": "burn_cpu",
     "provider": {
         "type": "python",
-        "module": "chaosazure.vm.actions",
-        "func": "stop_machines",
-        "secrets": ["azure"],
+        "module": "saltstack.machines.actions",
+        "func": "burn_cpu",
+        "secrets": ["saltstack"],
         "arguments": {
             "parameters": {
-                "TimeToRunInSeconds": 45
+                "execution_duration": "300"
             }
         }
     }
@@ -55,13 +54,26 @@ Please explore the code to see existing probes and actions.
 ## Configuration
 
 ### Credentials
-This extension uses the [Azure SDK][sdk] libraries under the hood. The Azure SDK library
-expects that you have a tenant and client identifier, as well as a client secret and subscription, that allows you to 
-authenticate with the Azure resource management API.
+    0. Salt Master URL
+        * SALTMASTER_HOST
 
-[creds]: https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-connect-to-secure-cluster
-[requests]: http://docs.python-requests.org/en/master/
-[sdk]: https://github.com/Azure/azure-sdk-for-python
+    1. Useranme & Password.
+       -d username='salt' -d password='abcd1234' -d eauth='pam'
+       Then a token in obrained via <salt_url>/login
+
+    2. Token
+       A token directly, same with the backend of 1.
+
+    3. Key, only from Salt Master
+        * SALTMASTER_HOST: Salt Master API address
+
+        You can authenticate with user / password via:
+        * SALTMASTER_USER: the user name
+        * SALTMASTER_PASSWORD: the password
+
+        Or via a token:
+        * SALTMASTER_TOKEN
+
 
 There are two ways of doing this:
 
@@ -69,18 +81,33 @@ There are two ways of doing this:
 
     ```json
     {
-        "azure": {
-            "client_id": {
+        "saltstack": {
+            "SALTMASTER_HOST": {
                 "type": "env",
-                "key": "AZURE_CLIENT_ID"
+                "key": "SALTMASTER_HOST"
             },
-            "client_secret": {
+            "SALTMASTER_USER": {
                 "type": "env",
-                "key": "AZURE_CLIENT_SECRET"
+                "key": "SALTMASTER_USER"
             },
-            "tenant_id": {
+            "SALTMASTER_PASSWORD": {
                 "type": "env",
-                "key": "AZURE_TENANT_ID"
+                "key": "SALTMASTER_PASSWORD"
+            }
+        }
+    }
+    ```
+
+    ```json
+    {
+        "saltstack": {
+            "SALTMASTER_HOST": {
+                "type": "env",
+                "key": "SALTMASTER_HOST"
+            },
+            "SALTMASTER_TOKEN": {
+                "type": "env",
+                "key": "SALTMASTER_TOKEN"
             }
         }
     }
@@ -90,23 +117,25 @@ There are two ways of doing this:
 
     ```json
     {
-        "azure": {
-            "client_id": "your-super-secret-client-id",
-            "client_secret": "your-even-more-super-secret-client-secret",
-            "tenant_id": "your-tenant-id"
+        "saltstack": {
+            "SALTMASTER_HOST": "https://172.10.20.666",
+            "SALTMASTER_USER": "username",
+            "SALTMASTER_PASSWORD": "password"
+        }
+    }
+    ```
+
+    ```json
+    {
+        "saltstack": {
+            "SALTMASTER_HOST": "https://172.10.20.666",
+            "SALTMASTER_TOKEN": "abcd1234abcd1234abcd1234"
         }
     }
     ```
     
-    Additionally you need to provide the Azure subscription id.
+    Additionally you may directly use if you are on the SaltMaster
 
-    ```json
-    {
-        "azure": {
-            "subscription_id": "your-azure-subscription-id"
-        }
-    }
-    ```
 
 ### Putting it all together
 
@@ -124,46 +153,49 @@ Here is a full example:
 	"node"
   ],
   "configuration": {
-    "azure": {
-      "subscription_id": "xxx"
+    "saltstack": {
+        "environment": "azure"
 	}
   },
   "secrets": {
-    "azure": {
-      "client_id": "xxx",
-      "client_secret": "xxx",
-      "tenant_id": "xxx"
+   "saltstack": {
+       "SALTMASTER_HOST": "https://172.20.1.172:8000",
+       "SALTMASTER_USER": "saltuser",
+       "SALTMASTER_PASSWORD": "asfasfasdfa"
     }
-  },
+   },
   "steady-state-hypothesis": {
     "title": "Services are all available and healthy",
     "probes": [
       {
         "type": "probe",
-        "name": "consumer-service-must-still-respond",
-        "tolerance": 200,
+        "name": "check_minions_online",
         "provider": {
-          "type": "http",
-          "url": "https://some-url/"
+          "type": "python",
+          "module": "saltstack.machine.probes",
+          "func": "is_minion_online",
+          "arguments": {
+              "instance_ids": [ "PABCDEFGS0016","PABCDEFGS0666" ]
+          },
+          "secrets": ["saltstack"]
         }
       }
     ]
   },
   "method": [
     {
-      "type": "action",
-      "name": "restart-node-at-random",
-      "provider": {
-        "type": "python",
-        "module": "chaosazure.machine.actions",
-        "func": "restart_machines",
-        "secrets": [
-          "azure"
-        ],
-        "config": [
-          "azure"
-        ]
-      }
+        "type": "action",
+        "name": "stress_cpu",
+        "provider": {
+            "type": "python",
+            "module": "saltstack.machine.actions",
+            "func": "stress_cpu",
+            "arguments": {
+                "execution_duration": "300",
+                "instance_ids": [ "PABCDEFGS0016","PABCDEFGS0666" ]
+            },
+            "secrets": ["saltstack"]
+        }
     }
   ],
   "rollbacks": [

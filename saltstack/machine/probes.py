@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from chaoslib.types import Configuration, Secrets
+from typing import Any, List
 from logzero import logger
 from saltstack import saltstack_api_client
 import saltstack
 
-__all__ = ["is_minion_online"]
+__all__ = ["is_minion_online","is_iproute_tc_installed"]
 
 
-def is_minion_online(clients: str = None,
+def is_minion_online(instance_ids: List[str],
                       configuration: Configuration = None,
                       secrets: Secrets = None):
     """
@@ -24,12 +25,12 @@ def is_minion_online(clients: str = None,
     """
     try:
         client = saltstack.saltstack_api_client(secrets)
-        machines = client.run_cmd(clients, 'test.ping')
+        machines = client.run_cmd(instance_ids, 'test.ping')
 
         result = dict()
 
         for k, v in machines.items():
-            if k not in clients:
+            if k not in instance_ids:
                 result[k] = "Not a Salt Minion"
             else:
                 if v == False:
@@ -45,7 +46,7 @@ def is_minion_online(clients: str = None,
             )
 
 
-def is_iproute_tc_installed(clients: str = None,
+def is_iproute_tc_installed(instance_ids: List[str],
                       configuration: Configuration = None,
                       secrets: Secrets = None):
     """
@@ -68,12 +69,12 @@ def is_iproute_tc_installed(clients: str = None,
     """
     try:
         client = saltstack.saltstack_api_client(secrets)
-        machines = client.run_cmd(clients, 'cmd.run', 'tc -help')
+        machines = client.run_cmd(instance_ids, 'cmd.run', 'tc -help')
 
         result = dict()
 
         for k, v in machines.items():
-            if k not in clients:
+            if k not in instance_ids:
                 result[k] = "Not a Salt Minion"
             else:
                 if v.startsWith("Usage: tc"):
