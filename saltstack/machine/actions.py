@@ -528,10 +528,10 @@ def __construct_script_content__( action, os_type, parameters):
     if os_type == OS_WINDOWS:
         script_name = action+".ps1"
         # TODO in ps1
-        cmd_param = '\n'.join(['='.join(k, "'"+v+"'") for k, v in parameters.items()])
+        cmd_param = '\n'.join(['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
     elif os_type == OS_LINUX:
         script_name = action+".sh"
-        cmd_param = '\n'.join(['='.join(k, "'"+v+"'") for k, v in parameters.items()])
+        cmd_param = '\n'.join(['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
     else:
         raise FailedActivity(
             "Cannot find corresponding script for %s on OS: %s" % (action, os_type))
@@ -540,7 +540,7 @@ def __construct_script_content__( action, os_type, parameters):
                            "scripts", script_name)) as file:
         script_content = file.read()
     # merge duration
-    script_content = cmd_param+script_content
+    script_content = cmd_param + "\n" + script_content
     return script_content
 
 
