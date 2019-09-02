@@ -48,6 +48,11 @@ def burn_cpu(instance_ids: List[str] = None,
         param["duration"] = execution_duration
 
         jids = dict()
+
+        if len(machines) <= 0:
+            FailedActivity(
+                "Cannot find any machines {}".format(instance_ids))
+
         for k, v in machines.items():
             name = k
             os_type = v
@@ -57,7 +62,7 @@ def burn_cpu(instance_ids: List[str] = None,
             # Do async cmd and get jid
             logger.debug("Burning CPU of machine: {}".format(name))
             salt_method = 'cmd.run'
-            jid = client.async_run_cmd( name, salt_method, script_content)
+            jid = client.async_run_cmd(name, salt_method, script_content)
             jids[k] = jid
         logger.debug(json.dumps(jids))
         # Wait the duration as well
@@ -69,9 +74,10 @@ def burn_cpu(instance_ids: List[str] = None,
         for k, v in jids.items():
             res = client.async_cmd_exit_success(v)[k]
             result = client.get_async_cmd_result(v)[k]
-
+            if 'fail' in result:
+                res = False
             results_overview = results_overview and res
-            results[k]=result
+            results[k] = result
     except Exception as x:
         raise FailedActivity(
             "failed issuing a execute of shell script via salt API " + str(x)
@@ -83,6 +89,10 @@ def burn_cpu(instance_ids: List[str] = None,
     else:
         raise FailedActivity(
             "burn_cpu operation did not finish on time. "
+        )
+    if results_overview == False:
+        raise FailedActivity(
+            "One of experiments are failed among : {} ".format(results)
         )
 
 
@@ -121,6 +131,11 @@ def fill_disk(instance_ids: List[str] = None,
         param["execution_duration"]=execution_duration
         
         jids = dict()
+
+        if len(machines) <= 0:
+            FailedActivity(
+                "Cannot find any machines {}".format(instance_ids))
+
         for k, v in machines.items():
             name = k
             os_type = v
@@ -142,9 +157,10 @@ def fill_disk(instance_ids: List[str] = None,
         for k, v in jids.items():
             res = client.async_cmd_exit_success(v)[k]
             result = client.get_async_cmd_result(v)[k]
-
+            if 'fail' in result:
+                res = False
             results_overview = results_overview and res
-            results[k]=result
+            results[k] = result
     except Exception as x:
         raise FailedActivity(
             "failed issuing a execute of shell script via salt API " + str(x)
@@ -156,6 +172,10 @@ def fill_disk(instance_ids: List[str] = None,
     else:
         raise FailedActivity(
             "fill_disk operation did not finish on time. "
+        )
+    if results_overview == False:
+        raise FailedActivity(
+            "One of experiments are failed among : {} ".format(results)
         )
 
 
@@ -189,6 +209,11 @@ def burn_io(instance_ids: List[str] = None,
         param["duration"] = execution_duration
         
         jids = dict()
+
+        if len(machines) <= 0:
+            FailedActivity(
+                "Cannot find any machines {}".format(instance_ids))
+
         for k, v in machines.items():
             name = k
             os_type = v
@@ -198,7 +223,7 @@ def burn_io(instance_ids: List[str] = None,
             # Do async cmd and get jid
             logger.debug("Burning I/O of machine: {}".format(name))
             salt_method = 'cmd.run'
-            jid = client.async_run_cmd( name, salt_method, script_content)
+            jid = client.async_run_cmd(name, salt_method, script_content)
             jids[k] = jid
         logger.debug(json.dumps(jids))
         # Wait the duration as well
@@ -210,9 +235,10 @@ def burn_io(instance_ids: List[str] = None,
         for k, v in jids.items():
             res = client.async_cmd_exit_success(v)[k]
             result = client.get_async_cmd_result(v)[k]
-
+            if 'fail' in result:
+                res = False
             results_overview = results_overview and res
-            results[k]=result
+            results[k] = result
     except Exception as x:
         raise FailedActivity(
             "failed issuing a execute of shell script via salt API " + str(x)
@@ -224,6 +250,10 @@ def burn_io(instance_ids: List[str] = None,
     else:
         raise FailedActivity(
             "burn io operation did not finish on time. "
+        )
+    if results_overview == False:
+        raise FailedActivity(
+            "One of experiments are failed among : {} ".format(results)
         )
 
 
@@ -260,6 +290,11 @@ def network_advanced(instance_ids: List[str] = None,
         param["param"] = command
 
         jids = dict()
+
+        if len(machines) <= 0:
+            FailedActivity(
+                "Cannot find any machines {}".format(instance_ids))
+
         for k, v in machines.items():
             name = k
             os_type = v
@@ -281,7 +316,8 @@ def network_advanced(instance_ids: List[str] = None,
         for k, v in jids.items():
             res = client.async_cmd_exit_success(v)[k]
             result = client.get_async_cmd_result(v)[k]
-
+            if 'fail' in result:
+                res = False
             results_overview = results_overview and res
             results[k]=result
     except Exception as x:
@@ -296,11 +332,15 @@ def network_advanced(instance_ids: List[str] = None,
         raise FailedActivity(
             "network_advanced operation did not finish on time. "
         )
+    if results_overview == False:
+        raise FailedActivity(
+            "One of experiments are failed among : {} ".format(results)
+        )
 
 
 def network_loss(instance_ids: List[str] = None,
                  execution_duration: str = "60",
-                 loss_ratio: str = "",
+                 loss_ratio: str = "5%",
                  configuration: Configuration = None,
                  secrets: Secrets = None):
     """
@@ -333,6 +373,11 @@ def network_loss(instance_ids: List[str] = None,
         param["param"] = "loss " + loss_ratio
 
         jids = dict()
+
+        if len(machines) <= 0:
+            FailedActivity(
+                "Cannot find any machines {}".format(instance_ids))
+
         for k, v in machines.items():
             name = k
             os_type = v
@@ -354,7 +399,8 @@ def network_loss(instance_ids: List[str] = None,
         for k, v in jids.items():
             res = client.async_cmd_exit_success(v)[k]
             result = client.get_async_cmd_result(v)[k]
-
+            if 'fail' in result:
+                res = False
             results_overview = results_overview and res
             results[k]=result
     except Exception as x:
@@ -369,11 +415,15 @@ def network_loss(instance_ids: List[str] = None,
         raise FailedActivity(
             "network_loss operation did not finish on time. "
         )
+    if results_overview == False:
+        raise FailedActivity(
+            "One of experiments are failed among : {} ".format(results)
+        )
 
 
 def network_corruption(instance_ids: List[str] = None,
                        execution_duration: str = "60",
-                       corruption_ratio: str = "",
+                       corruption_ratio: str = "5%",
                        configuration: Configuration = None,
                        secrets: Secrets = None):
     """
@@ -406,6 +456,12 @@ def network_corruption(instance_ids: List[str] = None,
         param["param"] = "corrupt " + corruption_ratio
 
         jids = dict()
+
+        if len(machines) <= 0:
+            FailedActivity(
+                "Cannot find any machines {}".format(instance_ids))
+
+
         for k, v in machines.items():
             name = k
             os_type = v
@@ -427,7 +483,8 @@ def network_corruption(instance_ids: List[str] = None,
         for k, v in jids.items():
             res = client.async_cmd_exit_success(v)[k]
             result = client.get_async_cmd_result(v)[k]
-
+            if 'fail' in result:
+                res = False
             results_overview = results_overview and res
             results[k]=result
     except Exception as x:
@@ -442,10 +499,14 @@ def network_corruption(instance_ids: List[str] = None,
         raise FailedActivity(
             "network_corruption operation did not finish on time. "
         )
+    if results_overview == False:
+        raise FailedActivity(
+            "One of experiments are failed among : {} ".format(results)
+        )
 
 
-def network_latency(instance_ids: str = None,
-                    execution_duration: int = 60,
+def network_latency(instance_ids: List[str] = None,
+                    execution_duration: str = "60",
                     delay: str = "1000ms",
                     variance: str = "500ms",
                     ratio: str = "",
@@ -483,6 +544,11 @@ def network_latency(instance_ids: str = None,
         param["param"] = "delay " + delay + " " + variance + " " + ratio
 
         jids = dict()
+
+        if len(machines) <= 0:
+            FailedActivity(
+                "Cannot find any machines {}".format(instance_ids))
+
         for k, v in machines.items():
             name = k
             os_type = v
@@ -504,9 +570,11 @@ def network_latency(instance_ids: str = None,
         for k, v in jids.items():
             res = client.async_cmd_exit_success(v)[k]
             result = client.get_async_cmd_result(v)[k]
-
+            if 'fail' in result:
+                res = False
             results_overview = results_overview and res
-            results[k]=result
+            results[k] = result
+
     except Exception as x:
         raise FailedActivity(
             "failed issuing a execute of shell script via salt API " + str(x)
@@ -519,6 +587,10 @@ def network_latency(instance_ids: str = None,
         raise FailedActivity(
             "network_latency operation did not finish on time. "
         )
+    if results_overview == False:
+        raise FailedActivity(
+            "One of experiments are failed among : {} ".format(results)
+        )
 
 # def restore_network_setting():
 #     return
@@ -530,7 +602,7 @@ def network_latency(instance_ids: str = None,
 ###############################################################################
 # Private helper functions
 ###############################################################################
-def __construct_script_content__( action, os_type, parameters):
+def __construct_script_content__(action, os_type, parameters):
 
     if os_type == OS_WINDOWS:
         script_name = action+".ps1"

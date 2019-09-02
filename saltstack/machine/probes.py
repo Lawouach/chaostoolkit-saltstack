@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from chaoslib.types import Configuration, Secrets
+from chaoslib.exceptions import FailedActivity
 from typing import Any, List
 from logzero import logger
 from saltstack import saltstack_api_client
@@ -29,11 +30,11 @@ def is_minion_online(instance_ids: List[str],
 
         result = dict()
 
-        for k, v in machines.items():
-            if k not in instance_ids:
+        for k in instance_ids:
+            if k not in machines:
                 result[k] = "Not a Salt Minion"
             else:
-                if v == False:
+                if machines[k] == False:
                     result[k] = "Offline"
                 else:
                     result[k] = "Online"
@@ -73,11 +74,11 @@ def is_iproute_tc_installed(instance_ids: List[str],
 
         result = dict()
 
-        for k, v in machines.items():
-            if k not in instance_ids:
+        for k in instance_ids:
+            if k not in machines:
                 result[k] = "Not a Salt Minion"
             else:
-                if v.startsWith("Usage: tc"):
+                if machines[k].startswith("Usage: tc"):
                     result[k] = "Installed"
                 else:
                     result[k] = "Not Installed"
