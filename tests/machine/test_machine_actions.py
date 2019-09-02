@@ -14,6 +14,29 @@ class AnyStringWith(str):
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
 @patch('saltstack.saltstack_api_client', autospec=True)
+def test_burn_cpu_on_windows(init, open):
+    # mock
+    client = MagicMock()
+    init.return_value = client
+
+    client.get_grains_get.return_value = {'CLIENT1': "Windows"}
+    client.async_run_cmd.return_value = "20190830103239148771"
+    client.get_async_cmd_result.return_value = {'CLIENT1': "Stressing CLIENT1 1 CPUs for 180 seconds.\nStressing 1 CPUs for 180 seconds. Done\nexperiment strees_cpu <CLIENT1> -> success"}
+    client.async_cmd_exit_success.return_value = {'CLIENT1': True}
+
+    # do
+    burn_cpu(instance_ids=['CLIENT1'],
+             execution_duration="1")
+
+    open.assert_called_with(AnyStringWith("cpu_stress_test.ps1"))
+    client.get_grains_get.assert_called_with(['CLIENT1'], 'kernel')
+    client.async_run_cmd.assert_called_with('CLIENT1', 'cmd.run', AnyStringWith('script'))
+    client.async_cmd_exit_success.assert_called_with('20190830103239148771')
+    client.get_async_cmd_result.assert_called_with('20190830103239148771')
+
+
+@patch("builtins.open", new_callable=mock_open, read_data="script")
+@patch('saltstack.saltstack_api_client', autospec=True)
 def test_burn_cpu_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -220,6 +243,28 @@ def test_burn_io_on_linux_two_error_execution(init, open):
                                                call('CLIENT2', 'cmd.run', AnyStringWith('script'))]
     assert client.async_cmd_exit_success.mock_calls == [call('20190830103239148772'), call('20190830103239148772')]
     assert client.get_async_cmd_result.mock_calls == [call('20190830103239148772'), call('20190830103239148772')]
+
+
+@patch("builtins.open", new_callable=mock_open, read_data="script")
+@patch('saltstack.saltstack_api_client', autospec=True)
+def test_fill_disk_on_windows(init, open):
+    # mock
+    client = MagicMock()
+    init.return_value = client
+
+    client.get_grains_get.return_value = {'CLIENT1': "Windows"}
+    client.async_run_cmd.return_value = "20190830103239148771"
+    client.get_async_cmd_result.return_value = {'CLIENT1': "Stressing CLIENT1 1 CPUs for 180 seconds.\nStressing 1 CPUs for 180 seconds. Done\nexperiment strees_cpu <CLIENT1> -> success"}
+    client.async_cmd_exit_success.return_value = {'CLIENT1': True}
+
+    # do
+    fill_disk(instance_ids=['CLIENT1'], execution_duration="1")
+
+    open.assert_called_with(AnyStringWith("fill_disk.ps1"))
+    client.get_grains_get.assert_called_with(['CLIENT1'], 'kernel')
+    client.async_run_cmd.assert_called_with('CLIENT1', 'cmd.run', AnyStringWith('script'))
+    client.async_cmd_exit_success.assert_called_with('20190830103239148771')
+    client.get_async_cmd_result.assert_called_with('20190830103239148771')
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")

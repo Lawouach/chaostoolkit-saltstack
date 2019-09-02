@@ -1,5 +1,5 @@
 # OS Types
-OS_WINDOWS = "windows"
+OS_WINDOWS = "Windows"
 OS_LINUX = "Linux"
 
 # script name
