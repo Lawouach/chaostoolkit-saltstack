@@ -1,8 +1,11 @@
-
-from saltstack.machine.probes import is_minion_online, is_iproute_tc_installed
-from saltstack import saltstack_api_client
-import saltstack
 from unittest.mock import MagicMock, patch
+
+from chaossaltstack.machine.probes import is_minion_online, \
+    is_iproute_tc_installed
+from chaossaltstack import saltstack_api_client
+import chaossaltstack
+
+
 
 THREE_INSTANCE = ["CLIENT1", "CLIENT2", "CLIENT3"]
 ONLINE_MINION = ["CLIENT1"]
@@ -11,7 +14,7 @@ NO_MINION = ["CLIENT3"]
 ONLINE_MINIONS = ["CLIENT1", "CLIENT4"]
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_minion_online_multiple_minions(init):
     # mock
     client = MagicMock()
@@ -26,7 +29,7 @@ def test_is_minion_online_multiple_minions(init):
     assert res["CLIENT3"] == "Not a Salt Minion"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_minion_online_offline_single(init):
     # mock
     client = MagicMock()
@@ -39,7 +42,7 @@ def test_is_minion_online_offline_single(init):
     assert res["CLIENT2"] == "Offline"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_minion_online_online_single(init):
     # mock
     client = MagicMock()
@@ -52,7 +55,7 @@ def test_is_minion_online_online_single(init):
     assert res["CLIENT1"] == "Online"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_minion_online_not_minion(init):
     # mock
     client = MagicMock()
@@ -65,7 +68,7 @@ def test_is_minion_online_not_minion(init):
     assert res["CLIENT3"] == "Not a Salt Minion"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_minion_online_online_two(init):
     # mock
     client = MagicMock()
@@ -79,7 +82,7 @@ def test_is_minion_online_online_two(init):
     assert res["CLIENT1"] == "Online"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_iproute_tc_installed_multiple_minions(init):
     # mock
     client = MagicMock()
@@ -94,7 +97,7 @@ def test_is_iproute_tc_installed_multiple_minions(init):
     assert res["CLIENT3"] == "Not a Salt Minion"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_iproute_tc_installed_single_not_installed(init):
     # mock
     client = MagicMock()
@@ -107,7 +110,7 @@ def test_is_iproute_tc_installed_single_not_installed(init):
     assert res["CLIENT1"] == "Installed"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_iproute_tc_installed_single_installed(init):
     # mock
     client = MagicMock()
@@ -120,7 +123,7 @@ def test_is_iproute_tc_installed_single_installed(init):
     assert res["CLIENT2"] == "Not Installed"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_iproute_tc_installed_two_installed(init):
     # mock
     client = MagicMock()
@@ -134,7 +137,7 @@ def test_is_iproute_tc_installed_two_installed(init):
     assert res["CLIENT4"] == "Installed"
 
 
-@patch('saltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.saltstack_api_client', autospec=True)
 def test_is_iproute_tc_installed_not_minion(init):
     # mock
     client = MagicMock()

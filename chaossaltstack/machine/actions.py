@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 import os
-from typing import Any, Dict, List
 import json
-
-from saltstack import saltstack_api_client
-import saltstack
-from saltstack.machine.constants import OS_LINUX, OS_WINDOWS
-from saltstack.machine.constants import BURN_CPU, FILL_DISK, NETWORK_UTIL, BURN_IO
+from time import sleep
+from typing import List
 
 from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
 from logzero import logger
-from time import sleep
 
-__all__ = ["burn_cpu", "fill_disk", "network_latency", "burn_io", 
+from .. import saltstack_api_client
+from .constants import OS_LINUX, OS_WINDOWS
+from .constants import BURN_CPU, FILL_DISK, NETWORK_UTIL, \
+    BURN_IO
+
+
+__all__ = ["burn_cpu", "fill_disk", "network_latency", "burn_io",
            "network_loss", "network_corruption", "network_advanced"]
 
 
 def burn_cpu(instance_ids: List[str] = None,
-               execution_duration: str = "60",
-               configuration: Configuration = None,
-               secrets: Secrets = None):
+             execution_duration: str = "60",
+             configuration: Configuration = None,
+             secrets: Secrets = None):
     """
     burn CPU up to 100% at random machines.
 
@@ -38,10 +39,8 @@ def burn_cpu(instance_ids: List[str] = None,
         "Start burn_cpu: configuration='{}', instance_ids='{}'".format(
             configuration, instance_ids))
 
-    logger.debug(json.dumps(secrets))
-
     try:
-        client = saltstack.saltstack_api_client(secrets)
+        client = saltstack_api_client(secrets)
         machines = client.get_grains_get(instance_ids, 'kernel')
 
         param = dict()
@@ -57,7 +56,8 @@ def burn_cpu(instance_ids: List[str] = None,
             name = k
             os_type = v
             param["instance_id"] = k
-            script_content = __construct_script_content__(BURN_CPU, os_type, param)
+            script_content = __construct_script_content__(
+                BURN_CPU, os_type, param)
 
             # Do async cmd and get jid
             logger.debug("Burning CPU of machine: {}".format(name))
@@ -80,17 +80,19 @@ def burn_cpu(instance_ids: List[str] = None,
             results[k] = result
     except Exception as x:
         raise FailedActivity(
-            "failed issuing a execute of shell script via salt API " + str(x)
-            )
+            "failed issuing a execute of shell script via salt API {}".format(
+                str(x)
+            ))
 
     if results:
         for k, v in results.items():
-            logger.info(k + " - " + v)  
+            logger.info(k + " - " + v)
     else:
         raise FailedActivity(
             "burn_cpu operation did not finish on time. "
         )
-    if results_overview == False:
+
+    if results_overview is False:
         raise FailedActivity(
             "One of experiments are failed among : {} ".format(results)
         )
@@ -102,9 +104,7 @@ def fill_disk(instance_ids: List[str] = None,
               configuration: Configuration = None,
               secrets: Secrets = None):
     """
-    For now do not have this scenario, 
-
-    Fill the disk with random data.
+    For now do not have this scenario, fill the disk with random data.
 
     Parameters
     ----------
@@ -121,15 +121,13 @@ def fill_disk(instance_ids: List[str] = None,
         "Start fill_disk: configuration='{}', instance_ids='{}'".format(
             configuration, instance_ids))
 
-    logger.debug(json.dumps(secrets))
-
     try:
-        client = saltstack.saltstack_api_client(secrets)
+        client = saltstack_api_client(secrets)
         machines = client.get_grains_get(instance_ids, 'kernel')
 
         param = dict()
-        param["execution_duration"]=execution_duration
-        
+        param["execution_duration"] = execution_duration
+
         jids = dict()
 
         if len(machines) <= 0:
@@ -140,12 +138,13 @@ def fill_disk(instance_ids: List[str] = None,
             name = k
             os_type = v
             param["instance_id"] = k
-            script_content = __construct_script_content__(FILL_DISK, os_type, param)
+            script_content = __construct_script_content__(
+                FILL_DISK, os_type, param)
 
             # Do async cmd and get jid
             logger.debug("Filling disk of machine: {}".format(name))
             salt_method = 'cmd.run'
-            jid = client.async_run_cmd( name, salt_method, script_content)
+            jid = client.async_run_cmd(name, salt_method, script_content)
             jids[k] = jid
         logger.debug(json.dumps(jids))
         # Wait the duration as well
@@ -163,17 +162,19 @@ def fill_disk(instance_ids: List[str] = None,
             results[k] = result
     except Exception as x:
         raise FailedActivity(
-            "failed issuing a execute of shell script via salt API " + str(x)
-            )
+            "failed issuing a execute of shell script via salt API {}".format(
+                str(x)
+            ))
 
     if results:
         for k, v in results.items():
-            logger.info(k + " - " + v)  
+            logger.info(k + " - " + v)
     else:
         raise FailedActivity(
             "fill_disk operation did not finish on time. "
         )
-    if results_overview == False:
+
+    if results_overview is False:
         raise FailedActivity(
             "One of experiments are failed among : {} ".format(results)
         )
@@ -202,12 +203,12 @@ def burn_io(instance_ids: List[str] = None,
     logger.debug(json.dumps(secrets))
 
     try:
-        client = saltstack.saltstack_api_client(secrets)
+        client = saltstack_api_client(secrets)
         machines = client.get_grains_get(instance_ids, 'kernel')
 
         param = dict()
         param["duration"] = execution_duration
-        
+
         jids = dict()
 
         if len(machines) <= 0:
@@ -218,7 +219,8 @@ def burn_io(instance_ids: List[str] = None,
             name = k
             os_type = v
             param["instance_id"] = k
-            script_content = __construct_script_content__(BURN_IO, os_type, param)
+            script_content = __construct_script_content__(
+                BURN_IO, os_type, param)
 
             # Do async cmd and get jid
             logger.debug("Burning I/O of machine: {}".format(name))
@@ -241,17 +243,19 @@ def burn_io(instance_ids: List[str] = None,
             results[k] = result
     except Exception as x:
         raise FailedActivity(
-            "failed issuing a execute of shell script via salt API " + str(x)
-            )
+            "failed issuing a execute of shell script via salt API {}".format(
+                str(x)
+            ))
 
     if results:
         for k, v in results.items():
-            logger.info(k + " - " + v)  
+            logger.info(k + " - " + v)
     else:
         raise FailedActivity(
             "burn io operation did not finish on time. "
         )
-    if results_overview == False:
+
+    if results_overview is False:
         raise FailedActivity(
             "One of experiments are failed among : {} ".format(results)
         )
@@ -282,7 +286,7 @@ def network_advanced(instance_ids: List[str] = None,
     logger.debug(json.dumps(secrets))
 
     try:
-        client = saltstack.saltstack_api_client(secrets)
+        client = saltstack_api_client(secrets)
         machines = client.get_grains_get(instance_ids, 'kernel')
 
         param = dict()
@@ -299,12 +303,13 @@ def network_advanced(instance_ids: List[str] = None,
             name = k
             os_type = v
             param["instance_id"] = k
-            script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
+            script_content = __construct_script_content__(
+                NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
             logger.debug("network_advanced of machine: {}".format(name))
             salt_method = 'cmd.run'
-            jid = client.async_run_cmd( name, salt_method, script_content)
+            jid = client.async_run_cmd(name, salt_method, script_content)
             jids[k] = jid
         logger.debug(json.dumps(jids))
         # Wait the duration as well
@@ -319,10 +324,12 @@ def network_advanced(instance_ids: List[str] = None,
             if 'fail' in result:
                 res = False
             results_overview = results_overview and res
-            results[k]=result
+            results[k] = result
     except Exception as x:
         raise FailedActivity(
-            "failed issuing a execute of shell script via salt API " + str(x)
+            "failed issuing a execute of shell script via salt API {}".format(
+                str(x)
+            )
         )
 
     if results:
@@ -332,7 +339,7 @@ def network_advanced(instance_ids: List[str] = None,
         raise FailedActivity(
             "network_advanced operation did not finish on time. "
         )
-    if results_overview == False:
+    if results_overview is False:
         raise FailedActivity(
             "One of experiments are failed among : {} ".format(results)
         )
@@ -362,10 +369,8 @@ def network_loss(instance_ids: List[str] = None,
         "Start network_advanced: configuration='{}', instance_ids='{}'".format(
             configuration, instance_ids))
 
-    logger.debug(json.dumps(secrets))
-
     try:
-        client = saltstack.saltstack_api_client(secrets)
+        client = saltstack_api_client(secrets)
         machines = client.get_grains_get(instance_ids, 'kernel')
 
         param = dict()
@@ -382,12 +387,13 @@ def network_loss(instance_ids: List[str] = None,
             name = k
             os_type = v
             param["instance_id"] = k
-            script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
+            script_content = __construct_script_content__(
+                NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
             logger.debug("network_loss of machine: {}".format(name))
             salt_method = 'cmd.run'
-            jid = client.async_run_cmd( name, salt_method, script_content)
+            jid = client.async_run_cmd(name, salt_method, script_content)
             jids[k] = jid
         logger.debug(json.dumps(jids))
         # Wait the duration as well
@@ -402,10 +408,12 @@ def network_loss(instance_ids: List[str] = None,
             if 'fail' in result:
                 res = False
             results_overview = results_overview and res
-            results[k]=result
+            results[k] = result
     except Exception as x:
         raise FailedActivity(
-            "failed issuing a execute of shell script via salt API " + str(x)
+            "failed issuing a execute of shell script via salt API {}".format(
+                str(x)
+            )
         )
 
     if results:
@@ -415,7 +423,7 @@ def network_loss(instance_ids: List[str] = None,
         raise FailedActivity(
             "network_loss operation did not finish on time. "
         )
-    if results_overview == False:
+    if results_overview is False:
         raise FailedActivity(
             "One of experiments are failed among : {} ".format(results)
         )
@@ -442,13 +450,11 @@ def network_corruption(instance_ids: List[str] = None,
     """
 
     logger.debug(
-        "Start network_corruption: configuration='{}', instance_ids='{}'".format(
-            configuration, instance_ids))
-
-    logger.debug(json.dumps(secrets))
+        "Start network_corruption: configuration='{}', "
+        "instance_ids='{}'".format(configuration, instance_ids))
 
     try:
-        client = saltstack.saltstack_api_client(secrets)
+        client = saltstack_api_client(secrets)
         machines = client.get_grains_get(instance_ids, 'kernel')
 
         param = dict()
@@ -461,17 +467,17 @@ def network_corruption(instance_ids: List[str] = None,
             FailedActivity(
                 "Cannot find any machines {}".format(instance_ids))
 
-
         for k, v in machines.items():
             name = k
             os_type = v
             param["instance_id"] = k
-            script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
+            script_content = __construct_script_content__(
+                NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
             logger.debug("network_corruption of machine: {}".format(name))
             salt_method = 'cmd.run'
-            jid = client.async_run_cmd( name, salt_method, script_content)
+            jid = client.async_run_cmd(name, salt_method, script_content)
             jids[k] = jid
         logger.debug(json.dumps(jids))
         # Wait the duration as well
@@ -486,10 +492,12 @@ def network_corruption(instance_ids: List[str] = None,
             if 'fail' in result:
                 res = False
             results_overview = results_overview and res
-            results[k]=result
+            results[k] = result
     except Exception as x:
         raise FailedActivity(
-            "failed issuing a execute of shell script via salt API " + str(x)
+            "failed issuing a execute of shell script via salt API {}".format(
+                str(x)
+            )
         )
 
     if results:
@@ -499,7 +507,8 @@ def network_corruption(instance_ids: List[str] = None,
         raise FailedActivity(
             "network_corruption operation did not finish on time. "
         )
-    if results_overview == False:
+
+    if results_overview is False:
         raise FailedActivity(
             "One of experiments are failed among : {} ".format(results)
         )
@@ -527,16 +536,15 @@ def network_latency(instance_ids: List[str] = None,
     variance : str
         Variance of the delay in ms. Defaults to 500ms.
     ratio: str = "5%", optional
-        the specific ratio of how many Variance of the delay in ms. Defaults to "".
+        the specific ratio of how many Variance of the delay in ms.
+        Defaults to "".
     """
     logger.debug(
         "Start network_latency: configuration='{}', instance_ids='{}'".format(
             configuration, instance_ids))
 
-    logger.debug(json.dumps(secrets))
-
     try:
-        client = saltstack.saltstack_api_client(secrets)
+        client = saltstack_api_client(secrets)
         machines = client.get_grains_get(instance_ids, 'kernel')
 
         param = dict()
@@ -553,12 +561,13 @@ def network_latency(instance_ids: List[str] = None,
             name = k
             os_type = v
             param["instance_id"] = k
-            script_content = __construct_script_content__(NETWORK_UTIL, os_type, param)
+            script_content = __construct_script_content__(
+                NETWORK_UTIL, os_type, param)
 
             # Do async cmd and get jid
             logger.debug("network_latency of machine: {}".format(name))
             salt_method = 'cmd.run'
-            jid = client.async_run_cmd( name, salt_method, script_content)
+            jid = client.async_run_cmd(name, salt_method, script_content)
             jids[k] = jid
         logger.debug(json.dumps(jids))
         # Wait the duration as well
@@ -587,16 +596,10 @@ def network_latency(instance_ids: List[str] = None,
         raise FailedActivity(
             "network_latency operation did not finish on time. "
         )
-    if results_overview == False:
+    if results_overview is False:
         raise FailedActivity(
             "One of experiments are failed among : {} ".format(results)
         )
-
-# def restore_network_setting():
-#     return
-#
-# def release_io():
-#     return
 
 
 ###############################################################################
@@ -607,13 +610,16 @@ def __construct_script_content__(action, os_type, parameters):
     if os_type == OS_WINDOWS:
         script_name = action+".ps1"
         # TODO in ps1
-        cmd_param = '\n'.join(['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
+        cmd_param = '\n'.join(
+            ['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
     elif os_type == OS_LINUX:
         script_name = action+".sh"
-        cmd_param = '\n'.join(['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
+        cmd_param = '\n'.join(
+            ['='.join([k, "'"+v+"'"]) for k, v in parameters.items()])
     else:
         raise FailedActivity(
-            "Cannot find corresponding script for %s on OS: %s" % (action, os_type))
+            "Cannot find corresponding script for {} on OS: {}".format(
+                action, os_type))
 
     with open(os.path.join(os.path.dirname(__file__),
                            "scripts", script_name)) as file:
@@ -621,5 +627,3 @@ def __construct_script_content__(action, os_type, parameters):
     # merge duration
     script_content = cmd_param + "\n" + script_content
     return script_content
-
-

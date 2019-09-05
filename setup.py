@@ -4,11 +4,22 @@
 import sys
 
 import io
+import os
 import setuptools
 
-sys.path.insert(0, ".")
-from saltstack import __version__
-sys.path.remove(".")
+
+def get_version_from_package() -> str:
+    """
+    Read the package version from the source without importing it.
+    """
+    path = os.path.join(os.path.dirname(__file__), "chaossaltstack/__init__.py")
+    path = os.path.normpath(os.path.abspath(path))
+    with open(path) as f:
+        for line in f:
+            if line.startswith("__version__"):
+                token, version = line.split(" = ", 1)
+                version = version.replace("'", "").strip()
+                return version
 
 name = 'chaostoolkit-saltstack'
 desc = 'Chaos Toolkit Extension for SaltStack'
@@ -26,6 +37,7 @@ classifiers = [
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: Implementation',
     'Programming Language :: Python :: Implementation :: CPython'
 ]
@@ -34,8 +46,8 @@ author_email = 'contact@chaostoolkit.org'
 url = 'https://chaostoolkit.org'
 license = 'Apache License Version 2.0'
 packages = [
-    'saltstack',
-    'saltstack.machine'
+    'chaossaltstack',
+    'chaossaltstack.machine'
 ]
 
 needs_pytest = set(['pytest', 'test']).intersection(sys.argv)
@@ -51,7 +63,7 @@ with io.open('requirements.txt') as f:
 
 setup_params = dict(
     name=name,
-    version=__version__,
+    version=get_version_from_package(),
     description=desc,
     long_description=long_desc,
     long_description_content_type='text/markdown',

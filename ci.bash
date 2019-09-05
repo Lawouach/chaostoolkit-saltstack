@@ -3,11 +3,11 @@ set -eo pipefail
 
 function lint () {
     echo "Checking the code syntax"
-    pycodestyle --first saltstack
+    pylama chaossaltstack
 }
 
 function build () {
-    echo "Building the chaostoolkit-azure package"
+    echo "Building the chaostoolkit-saltstack package"
     python setup.py build
 }
 

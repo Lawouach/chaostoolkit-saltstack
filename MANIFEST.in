@@ -4,4 +4,4 @@ include requirements-dev.txt
 include LICENSE
 include CHANGELOG.md
 include pytest.ini
-include saltstack/machine/scripts/*
+include chaossaltstack/machine/scripts/*

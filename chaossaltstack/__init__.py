@@ -2,31 +2,28 @@
 import json
 import os
 import os.path
-from typing import List
+from typing import Any, Dict, List
 
 from chaoslib.discovery.discover import discover_actions, discover_probes, \
     initialize_discovery_result
-from chaoslib.exceptions import DiscoveryFailed
-from chaoslib.types import Discovery, DiscoveredActivities, \
-    DiscoveredSystemInfo, Secrets
+from chaoslib.exceptions import FailedActivity
+from chaoslib.types import Configuration, Discovery, DiscoveredActivities, \
+    Secrets
 from logzero import logger
 import requests
-import ssl
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-__all__ = ["saltstack_api_client", "discover", "__version__"]
-__version__ = '0.0.1'
+__all__ = ["salt_api_client", "discover", "__version__"]
+__version__ = '0.1.0'
 
 
 class salt_api_client:
     """
-        Offically supported by NETAPI MODULES
-        https://docs.saltstack.com/en/latest/topics/netapi/index.html
-        However, generally you need to avoid http request verify by verify=False
-
+    Offically supported by NETAPI MODULES
+    https://docs.saltstack.com/en/latest/topics/netapi/index.html
+    However, generally you need to avoid http request verify by verify=False
     """
-
-    def __init__(self, configuration):
+    def __init__(self, configuration: Configuration):
         self.url = configuration['url']
         # Use Token
         self.useToken = False
@@ -34,7 +31,7 @@ class salt_api_client:
             self.useToken = True
             self.token = configuration['token']
             self.headers['X-Auth-Token'] = self.token
-        elif 'username' in configuration :
+        elif 'username' in configuration:
             self.username = configuration['username']
             self.password = configuration['password']
         # Default settings for Salt Master
@@ -42,53 +39,68 @@ class salt_api_client:
         self.params = {'client': 'local', 'fun': '', 'tgt': ''}
         # Use User/Pass
         self.login_url = self.url + "/login"
-        self.login_params = {'username': self.username, 'password': self.password, 'eauth': 'pam'}
+        self.login_params = {
+            'username': self.username, 'password': self.password,
+            'eauth': 'pam'
+        }
 
-    def run_cmd(self, tgt, method, arg=None):
+    def run_cmd(self, tgt, method: str, arg=None):
         """
            remote run commands，same with:
                salt 'client1' cmd.run 'ls -li'
         """
         if arg:
-            params = {'client':'local', 'fun': method, 'tgt': tgt, 'arg': arg, 'tgt_type':'list' }
+            params = {
+                'client': 'local', 'fun': method, 'tgt': tgt, 'arg': arg,
+                'tgt_type': 'list'
+            }
 
         else:
-            params = {'client':'local', 'fun': method, 'tgt': tgt, 'tgt_type':'list' }
+            params = {
+                'client': 'local', 'fun': method, 'tgt': tgt,
+                'tgt_type': 'list'
+            }
 
         # Refresh token for each execution
         self.__check_token__()
         result = self.__get_http_data__(self.url, params)
         return result
 
-    def async_run_cmd(self, tgt, method, arg=None):
+    def async_run_cmd(self, tgt, method: str, arg=None):
         """
-           remote run commands asynchronized，same with:
-               salt --async 'client1' cmd.run 'ls -li'
+        remote run commands asynchronized，same with:
+            salt --async 'client1' cmd.run 'ls -li'
         """
         if arg:
-            params = {'client': 'local_async', 'fun': method, 'tgt': tgt, 'arg': arg, 'tgt_type':'list' }
+            params = {
+                'client': 'local_async', 'fun': method, 'tgt': tgt,
+                'arg': arg, 'tgt_type': 'list'
+            }
         else:
-            params = {'client': 'local_async', 'fun': method, 'tgt': tgt, 'tgt_type':'list' }
+            params = {
+                'client': 'local_async', 'fun': method, 'tgt': tgt,
+                'tgt_type': 'list'
+            }
         self.__check_token__()
         jid = self.__get_http_data__(self.url, params)['jid']
         return jid
 
-    def get_async_cmd_result(self, jid):  
+    def get_async_cmd_result(self, jid: str):
         """
-            Get aync cmd result according to jid that returned when call aync cmd， same with:
-                salt 'client' jobs.lookup_jid 12345678987654321
+        Get aync cmd result according to jid that returned when call aync cmd，
+        same with: salt 'client' jobs.lookup_jid 12345678987654321
         """
         params = {'client': 'runner', 'fun': 'jobs.lookup_jid', 'jid': jid}
         self.__check_token__()
         result = self.__get_http_data__(self.url, params)
         return result
 
-    def async_cmd_exit_success(self, jid):  
+    def async_cmd_exit_success(self, jid: str):
         """
-            Check if a job has been executed and exit successfully
-                salt 'client' jobs.exit_success 12345678987654321
-            return:
-                {'client1': True, 'client2': True}
+        Check if a job has been executed and exit successfully
+            salt 'client' jobs.exit_success 12345678987654321
+        return:
+            {'client1': True, 'client2': True}
         """
         params = {'client': 'runner', 'fun': 'jobs.exit_success', 'jid': jid}
         self.__check_token__()
@@ -100,28 +112,33 @@ class salt_api_client:
             Get a specific grains atrribute/id
                 salt 'client1' grains.get kernel|os|os_family
         """
-        params = {'client':'local', 'fun': 'grains.get', 'tgt': tgt, 'arg':item, 'tgt_type':'list' }
+        params = {
+            'client': 'local', 'fun': 'grains.get', 'tgt': tgt, 'arg': item,
+            'tgt_type': 'list'
+        }
         self.__check_token__()
         result = self.__get_http_data__(self.url, params)
         return result
 
-    ###############################################################################
-    # Private functions
-    ###############################################################################
-    def __get_http_data__(self, url, params):
+    ###########################################################################
+    # Private methods
+    ###########################################################################
+    def __get_http_data__(self, url: str, params: Dict[str, Any]):
         send_data = json.dumps(params)
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-        request = requests.post(url, data=send_data, headers=self.headers, verify=False)
+        request = requests.post(
+            url, data=send_data, headers=self.headers, verify=False)
         response = request.json()
         result = dict(response)
         return result['return'][0]
 
     def __obtain_token__(self):
-        self.token = self.__get_http_data__(self.login_url, self.login_params).get('token')
+        self.token = self.__get_http_data__(
+            self.login_url, self.login_params).get('token')
         self.headers['X-Auth-Token'] = self.token
 
     def __check_token__(self):
-        if self.useToken != True:
+        if self.useToken is not True:
             self.__obtain_token__()
 
 
@@ -137,23 +154,22 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
     """
     Create a SaltStack http(s) client from:
 
-    1. Useranme & Password. 
+    1. Useranme & Password.
        -d username='salt' -d password='abcd1234' -d eauth='pam'
-       Then a token in obrained via <salt_url>/login 
+       Then a token in obrained via <salt_url>/login
 
     2. Token
        A token directly, same with the backend of 1.
 
     3. Key, only from Salt Master
 
-
         * SALTMASTER_HOST: Salt Master API address
 
         You can authenticate with user / password via:
-        * SALTMASTER_USER: the user name 
+        * SALTMASTER_USER: the user name
         * SALTMASTER_PASSWORD: the password
 
-        Or via a token: 
+        Or via a token:
         * SALTMASTER_TOKEN
 
         Or via local config if you are running this on Salt Master
@@ -186,9 +202,9 @@ def saltstack_api_client(secrets: Secrets = None) -> salt_api_client:
             configuration['token'] = lookup("SALTMASTER_TOKEN")
         else:
             raise FailedActivity(
-                "configuration is not complete, either use user/pass or a token! "
+                "configuration is not complete, either use user/pass "
+                "or a token! "
             )
-        logger.debug(json.dumps(configuration))
 
     return salt_api_client(configuration)
 
@@ -200,7 +216,7 @@ def discover(discover_system: bool = True) -> Discovery:
     logger.info("Discovering capabilities from chaostoolkit-saltstack")
 
     discovery = initialize_discovery_result(
-        "chaostoolkit-saltstack", __version__, "saltstack")
+        "chaostoolkit-saltstack", __version__, "chaossaltstack")
     discovery["activities"].extend(load_exported_activities())
     return discovery
 
