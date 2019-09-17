@@ -16,7 +16,7 @@ class AnyStringWith(str):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_cpu_on_windows(init, open):
     # mock
     client = MagicMock()
@@ -39,7 +39,7 @@ def test_burn_cpu_on_windows(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_cpu_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -62,7 +62,7 @@ def test_burn_cpu_on_linux(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_cpu_on_linux_two(init, open):
     # mock
     client = MagicMock()
@@ -87,7 +87,7 @@ def test_burn_cpu_on_linux_two(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_cpu_on_linux_two_error_in_script(init, open):
     # mock
     client = MagicMock()
@@ -112,7 +112,7 @@ def test_burn_cpu_on_linux_two_error_in_script(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_cpu_on_linux_two_error_in_execution(init, open):
     # mock
     client = MagicMock()
@@ -137,7 +137,7 @@ def test_burn_cpu_on_linux_two_error_in_execution(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_cpu_on_linux_wrong_os_type(init, open):
     # mock
     client = MagicMock()
@@ -151,7 +151,7 @@ def test_burn_cpu_on_linux_wrong_os_type(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_io_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -174,7 +174,7 @@ def test_burn_io_on_linux(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_io_on_linux_two(init, open):
     # mock
     client = MagicMock()
@@ -199,7 +199,7 @@ def test_burn_io_on_linux_two(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_io_on_linux_two_error_script(init, open):
     # mock
     client = MagicMock()
@@ -224,7 +224,7 @@ def test_burn_io_on_linux_two_error_script(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_burn_io_on_linux_two_error_execution(init, open):
     # mock
     client = MagicMock()
@@ -249,7 +249,7 @@ def test_burn_io_on_linux_two_error_execution(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_fill_disk_on_windows(init, open):
     # mock
     client = MagicMock()
@@ -271,7 +271,7 @@ def test_fill_disk_on_windows(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_fill_disk_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -293,7 +293,7 @@ def test_fill_disk_on_linux(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_fill_disk_on_linux_two(init, open):
     # mock
     client = MagicMock()
@@ -318,7 +318,7 @@ def test_fill_disk_on_linux_two(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_fill_disk_on_linux_two_error_script(init, open):
     # mock
     client = MagicMock()
@@ -343,7 +343,7 @@ def test_fill_disk_on_linux_two_error_script(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_fill_disk_on_linux_two_error_execution(init, open):
     # mock
     client = MagicMock()
@@ -368,7 +368,7 @@ def test_fill_disk_on_linux_two_error_execution(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_latency_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -390,7 +390,7 @@ def test_network_latency_on_linux(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_latency_on_linux_two(init, open):
     # mock
     client = MagicMock()
@@ -415,7 +415,7 @@ def test_network_latency_on_linux_two(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_latency_on_linux_two_error_in_script(init, open):
     # mock
     client = MagicMock()
@@ -440,7 +440,7 @@ def test_network_latency_on_linux_two_error_in_script(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_latency_on_linux_two_error_in_execution(init, open):
     # mock
     client = MagicMock()
@@ -465,7 +465,7 @@ def test_network_latency_on_linux_two_error_in_execution(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_loss_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -487,7 +487,7 @@ def test_network_loss_on_linux(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_loss_on_linux_two(init, open):
     # mock
     client = MagicMock()
@@ -512,7 +512,7 @@ def test_network_loss_on_linux_two(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_loss_on_linux_two_error_in_script(init, open):
     # mock
     client = MagicMock()
@@ -537,7 +537,7 @@ def test_network_loss_on_linux_two_error_in_script(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_loss_on_linux_two_error_in_execution(init, open):
     # mock
     client = MagicMock()
@@ -562,7 +562,7 @@ def test_network_loss_on_linux_two_error_in_execution(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_corruption_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -584,7 +584,7 @@ def test_network_corruption_on_linux(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_corruption_on_linux_two(init, open):
     # mock
     client = MagicMock()
@@ -609,7 +609,7 @@ def test_network_corruption_on_linux_two(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_corruption_on_linux_two_error_in_script(init, open):
     # mock
     client = MagicMock()
@@ -634,7 +634,7 @@ def test_network_corruption_on_linux_two_error_in_script(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_corruption_on_linux_two_error_in_execution(init, open):
     # mock
     client = MagicMock()
@@ -659,7 +659,7 @@ def test_network_corruption_on_linux_two_error_in_execution(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_advanced_on_linux(init, open):
     # mock
     client = MagicMock()
@@ -681,7 +681,7 @@ def test_network_advanced_on_linux(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_advanced_on_linux_two(init, open):
     # mock
     client = MagicMock()
@@ -705,7 +705,7 @@ def test_network_advanced_on_linux_two(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_advanced_on_linux_two_error_in_script(init, open):
     # mock
     client = MagicMock()
@@ -730,7 +730,7 @@ def test_network_advanced_on_linux_two_error_in_script(init, open):
 
 
 @patch("builtins.open", new_callable=mock_open, read_data="script")
-@patch('chaossaltstack.saltstack_api_client', autospec=True)
+@patch('chaossaltstack.machine.actions.saltstack_api_client', autospec=True)
 def test_network_advanced_on_linux_two_error_in_execution(init, open):
     # mock
     client = MagicMock()
